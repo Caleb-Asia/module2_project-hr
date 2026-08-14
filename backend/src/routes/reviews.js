@@ -1,0 +1,58 @@
+import express from 'express';
+import db from '../config/database.js'; // Note the .js extension
+
+const router = express.Router();
+
+// 1. GET: Get all reviews with employee details
+router.get('/', (req, res) => {
+    const sql = `
+        SELECT r.*, e.first_name, e.last_name, e.department 
+        FROM reviews r
+        JOIN employees e ON r.employee_id = e.employee_id
+        ORDER BY r.review_date DESC
+    `;
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
+// 2. GET: Get average rating (4.2/5 card)
+router.get('/average', (req, res) => {
+    const sql = `SELECT AVG(rating) as avg_rating FROM reviews`;
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const avg = results[0].avg_rating ? parseFloat(results[0].avg_rating).toFixed(1) : "0.0";
+        res.json({ average: avg });
+    });
+});
+
+// 3. GET: Get total number of reviews
+router.get('/stats', (req, res) => {
+    const sql = `SELECT COUNT(*) as total_reviews FROM reviews`;
+    db.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ total: results[0].total_reviews });
+    });
+});
+
+// 4. POST: Add a new review
+router.post('/', (req, res) => {
+    const { employee_id, rating, comments, quarter } = req.body;
+    if (!employee_id || !rating || !comments) {
+        return res.status(400).json({ error: "Employee, Rating, and Comments are required." });
+    }
+    if (rating < 1 || rating > 5) {
+        return res.status(400).json({ error: "Rating must be between 1 and 5." });
+    }
+    const reviewQuarter = quarter || `Q${Math.ceil((new Date().getMonth() + 1) / 3)} ${new Date().getFullYear()}`;
+    const today = new Date().toISOString().split('T')[0];
+    
+    const sql = 'INSERT INTO reviews (employee_id, review_date, rating, comments, quarter) VALUES (?, ?, ?, ?, ?)';
+    db.query(sql, [employee_id, today, rating, comments, reviewQuarter], (err, result) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.status(201).json({ message: "Review added successfully", id: result.insertId });
+    });
+});
+
+export default router;
