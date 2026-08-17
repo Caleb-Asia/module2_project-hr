@@ -1,5 +1,5 @@
 import express from 'express';
-import db from '../config/database.js'; // Note the .js extension
+import db from '../config/database.js';
 
 const router = express.Router();
 
@@ -12,12 +12,15 @@ router.get('/', (req, res) => {
         ORDER BY r.review_date DESC
     `;
     db.query(sql, (err, results) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) {
+            console.error("Error fetching reviews:", err);
+            return res.status(500).json({ error: err.message });
+        }
         res.json(results);
     });
 });
 
-// 2. GET: Get average rating (4.2/5 card)
+// 2. GET: Get average rating
 router.get('/average', (req, res) => {
     const sql = `SELECT AVG(rating) as avg_rating FROM reviews`;
     db.query(sql, (err, results) => {
@@ -52,6 +55,25 @@ router.post('/', (req, res) => {
     db.query(sql, [employee_id, today, rating, comments, reviewQuarter], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: "Review added successfully", id: result.insertId });
+    });
+});
+
+// 5. DELETE: Delete a single review by ID
+router.delete('/:id', (req, res) => {
+    const { id } = req.params;
+
+    const sql = 'DELETE FROM reviews WHERE review_id = ?';
+    db.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error("Error deleting review:", err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Review not found." });
+        }
+
+        res.json({ message: `Successfully deleted review.` });
     });
 });
 

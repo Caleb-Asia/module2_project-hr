@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
     });
 });
 
-// 2. GET: Get attendance statistics 
+// 2. GET: Get attendance statistics (80% / 20% cards)
 router.get('/stats', (req, res) => {
     const sql = `
         SELECT 
@@ -37,8 +37,6 @@ router.get('/stats', (req, res) => {
         }
         
         const total = results[0].total || 0;
-        
-        // Calculate percentages, handle division by zero safely
         let present_percent = 0;
         let absent_percent = 0;
         
@@ -47,63 +45,56 @@ router.get('/stats', (req, res) => {
             absent_percent = Math.round((results[0].absent_count / total) * 100);
         }
 
-        res.json({ 
-            present_percent, 
-            absent_percent, 
-            total_checks: total 
-        });
+        res.json({ present_percent, absent_percent, total_checks: total });
     });
 });
 
-// 3. POST: Add a new attendance record
+// 3. POST: Add a new attendance record (TEXT-BASED STORAGE)
 router.post('/', (req, res) => {
     const { employee_id, date, status } = req.body;
     
-    // Server-side validation
     if (!employee_id || !date || !status) {
         return res.status(400).json({ error: "Employee ID, Date, and Status are required." });
     }
 
-    // Validate status is only 'Present' or 'Absent'
     if (status !== 'Present' && status !== 'Absent') {
         return res.status(400).json({ error: "Status must be 'Present' or 'Absent'." });
     }
 
+    // 🚨 ABSOLUTE FINAL FIX: We are saving the date as a text string.
+    // Because the column is now VARCHAR(10), MySQL cannot convert the timezone anymore.
     const sql = 'INSERT INTO attendance (employee_id, attendance_date, status) VALUES (?, ?, ?)';
+    
     db.query(sql, [employee_id, date, status], (err, result) => {
         if (err) {
             console.error("Error adding attendance:", err);
             return res.status(500).json({ error: err.message });
         }
-        res.status(201).json({ 
-            message: "Attendance record added successfully", 
-            id: result.insertId 
-        });
+        res.status(201).json({ message: "Attendance record added successfully", id: result.insertId });
     });
 });
 
-// 4. DELETE: Delete a SINGLE attendance record by Employee ID and Date
+// 4. DELETE: Delete a SINGLE attendance record
 router.delete('/:employeeId/:date', (req, res) => {
     const { employeeId, date } = req.params;
+    const cleanDate = date.split('T')[0]; 
 
-    if (!employeeId || !date) {
-        return res.status(400).json({ error: "Employee ID and Date are required." });
-    }
-
+    // Compare using string equality since the column is now VARCHAR
     const sql = 'DELETE FROM attendance WHERE employee_id = ? AND attendance_date = ?';
-    db.query(sql, [employeeId, date], (err, result) => {
+    
+    db.query(sql, [employeeId, cleanDate], (err, result) => {
         if (err) {
             console.error("Error deleting attendance:", err);
             return res.status(500).json({ error: err.message });
         }
         
+        console.log("✅ MySQL affected rows:", result.affectedRows);
+
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "No attendance record found for this employee on that date." });
         }
 
-        res.json({ 
-            message: `Successfully deleted 1 record.` 
-        });
+        res.json({ message: `Successfully deleted 1 record.` });
     });
 });
 
