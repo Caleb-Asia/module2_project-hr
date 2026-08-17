@@ -1,0 +1,6 @@
+import { PayrollModel } from '../models/payroll.model.js';
+export const getPayroll = async (req, res) => { try { const data = await PayrollModel.getAll(); res.json(data); } catch (e) { res.status(500).json({ error: e.message }); } };
+export const getPayslip = async (req, res) => { try { const p = await PayrollModel.getByEmployeeId(req.params.employeeId); if (!p) return res.status(404).json({ message: 'Not found' }); res.json(p); } catch (e) { res.status(500).json({ error: e.message }); } };
+export const updatePayroll = async (req, res) => { try { const u = await PayrollModel.updateTimesheet(req.params.employeeId, req.body); if (!u) return res.status(404).json({ message: 'Not found' }); res.json(u); } catch (e) { res.status(500).json({ error: e.message }); } };
+export const recalculatePayroll = async (req, res) => { try { const r = await PayrollModel.recalculateFromAttendance(req.params.employeeId); if (!r) return res.status(404).json({ message: 'Not found' }); res.json({ message: 'Recalculated from attendance', data: r }); } catch (e) { res.status(500).json({ error: e.message }); } };
+export const getPayrollSummary = async (req, res) => { try { const s = await PayrollModel.getSummary(); res.json(s); } catch (e) { res.status(500).json({ error: e.message }); } };
