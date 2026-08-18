@@ -1,17 +1,21 @@
+/* ===================================================================== */
+/*              CALEB-DEV: REVIEWS ROUTES                   */
+/* ===================================================================== */
+
 import express from 'express';
-import db from '../config/database.js';
+import pool from '../config/db.js'; // FIXED: Changed 'db' to 'pool'
 
 const router = express.Router();
 
 // 1. GET: Get all reviews with employee details
 router.get('/', (req, res) => {
     const sql = `
-        SELECT r.*, e.first_name, e.last_name, e.department 
+        SELECT r.*, e.name AS employee_name, e.department
         FROM reviews r
-        JOIN employees e ON r.employee_id = e.employee_id
+        JOIN employees e ON r.employee_id = e.id  -- FIXED: e.employee_id -> e.id
         ORDER BY r.review_date DESC
     `;
-    db.query(sql, (err, results) => {
+    pool.query(sql, (err, results) => {
         if (err) {
             console.error("Error fetching reviews:", err);
             return res.status(500).json({ error: err.message });
@@ -23,7 +27,7 @@ router.get('/', (req, res) => {
 // 2. GET: Get average rating
 router.get('/average', (req, res) => {
     const sql = `SELECT AVG(rating) as avg_rating FROM reviews`;
-    db.query(sql, (err, results) => {
+    pool.query(sql, (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         const avg = results[0].avg_rating ? parseFloat(results[0].avg_rating).toFixed(1) : "0.0";
         res.json({ average: avg });
@@ -33,7 +37,7 @@ router.get('/average', (req, res) => {
 // 3. GET: Get total number of reviews
 router.get('/stats', (req, res) => {
     const sql = `SELECT COUNT(*) as total_reviews FROM reviews`;
-    db.query(sql, (err, results) => {
+    pool.query(sql, (err, results) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ total: results[0].total_reviews });
     });
@@ -50,9 +54,9 @@ router.post('/', (req, res) => {
     }
     const reviewQuarter = quarter || `Q${Math.ceil((new Date().getMonth() + 1) / 3)} ${new Date().getFullYear()}`;
     const today = new Date().toISOString().split('T')[0];
-    
+   
     const sql = 'INSERT INTO reviews (employee_id, review_date, rating, comments, quarter) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [employee_id, today, rating, comments, reviewQuarter], (err, result) => {
+    pool.query(sql, [employee_id, today, rating, comments, reviewQuarter], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });
         res.status(201).json({ message: "Review added successfully", id: result.insertId });
     });
@@ -62,13 +66,13 @@ router.post('/', (req, res) => {
 router.delete('/:id', (req, res) => {
     const { id } = req.params;
 
-    const sql = 'DELETE FROM reviews WHERE review_id = ?';
-    db.query(sql, [id], (err, result) => {
+    const sql = 'DELETE FROM reviews WHERE id = ?';
+    pool.query(sql, [id], (err, result) => {
         if (err) {
             console.error("Error deleting review:", err);
             return res.status(500).json({ error: err.message });
         }
-        
+       
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Review not found." });
         }

@@ -1,4 +1,4 @@
-import { pool } from '../config/database.js';
+import { pool } from '../config/db.js';
 
 export const getTotalEmployees = async () => {
     const [rows] = await pool.query('SELECT COUNT(*) as count FROM employees');
