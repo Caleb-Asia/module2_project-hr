@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// DEBUG LINE: Print the secret to the terminal to see if it's loaded!
 console.log("JWT_SECRET loaded as:", process.env.JWT_SECRET); 
 
 export const authenticateToken = (req, res, next) => {
