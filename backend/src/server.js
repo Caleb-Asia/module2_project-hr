@@ -3,14 +3,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 // Import Routes - UPDATED PATHS TO INCLUDE 'src/'
-import authRoutes from './src/routes/auth.js';
-import dashboardRoutes from './src/routes/dashboard.js';
-import timeoffRoutes from './src/routes/timeoff.js';
-import employeesRoutes from './src/routes/employees.js';
-import payrollRoutes from './src/routes/payroll.js';
-import attendanceRoutes from './src/routes/attendance.js';
-import reviewsRoutes from './src/routes/reviews.js';
-
+import authRoutes from './routes/auth.js';
+import dashboardRoutes from './routes/dashboard.js';
+import timeoffRoutes from './routes/timeoff.js';
+import employeesRoutes from './routes/employees.js';
+import payrollRoutes from './routes/payroll.js';
+import attendanceRoutes from './routes/attendance.js';
+import reviewsRoutes from './routes/reviews.js';
 dotenv.config();
 
 const app = express();

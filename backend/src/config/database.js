@@ -26,4 +26,5 @@ db.getConnection((err, connection) => {
 });
 
 
+export const pool = db;
 export default db;
