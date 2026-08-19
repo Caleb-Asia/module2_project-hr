@@ -6,10 +6,11 @@ const router = express.Router();
 // 1. GET: Get all attendance records
 router.get('/', async (req, res) => {
     try {
+        // ✅ FIX: Changed e.first_name/last_name to e.name, e.department to e.dept, e.employee_id to e.id
         const sql = `
-            SELECT a.*, e.first_name, e.last_name, e.department 
+            SELECT a.*, e.name as employee_name, e.dept as department
             FROM attendance a
-            JOIN employees e ON a.employee_id = e.employee_id
+            JOIN employees e ON a.employee_id = e.id
             ORDER BY a.attendance_date DESC
         `;
         const [rows] = await pool.query(sql);

@@ -1,50 +1,95 @@
 /* ===================================================================== */
-/*              BUTSHA-DEV: EMPLOYEE MODEL (ES6 FIXED)                   */
+/*              BUTSHA-DEV: EMPLOYEE MODEL (MATCHED TO SQL)              */
 /* ===================================================================== */
 
-import { pool } from '../config/db.js'; // FIXED: Correct import path
+import { pool } from '../config/db.js';
 
 export const EmployeeModel = {
+  // Get all employees - explicitly select the columns your frontend expects
   getAll: async () => {
-    const [rows] = await pool.query('SELECT * FROM employees ORDER BY id');
+    const [rows] = await pool.query(`
+      SELECT 
+        id, 
+        name, 
+        position, 
+        dept as department,     -- Maps SQL 'dept' to frontend 'department'
+        salary, 
+        contact as email,       -- Maps SQL 'contact' to frontend 'email'
+        history, 
+        status, 
+        score 
+      FROM employees 
+      ORDER BY id
+    `);
     return rows;
   },
+
+  // Get a single employee by ID
   getById: async (id) => {
-    const [rows] = await pool.query('SELECT * FROM employees WHERE id = ?', [id]);
+    const [rows] = await pool.query(`
+      SELECT 
+        id, 
+        name, 
+        position, 
+        dept as department, 
+        salary, 
+        contact as email, 
+        history, 
+        status, 
+        score 
+      FROM employees 
+      WHERE id = ?
+    `, [id]);
     return rows[0];
   },
+
+  // Create a new employee
   create: async (data) => {
+    // Map frontend 'department' and 'email' to SQL 'dept' and 'contact'
     const { name, position, department, salary, email, history, status, score } = data;
     
-    // AUTO_INCREMENT handles the ID for us, so we don't need to manually calculate it.
     const [result] = await pool.query(
-      'INSERT INTO employees (name, position, department, salary, email, history, status, score) VALUES (?,?,?,?,?,?,?,?)',
+      `INSERT INTO employees (name, position, dept, salary, contact, history, status, score) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [name, position, department, salary, email, history || '', status || 'Active', score || 85]
     );
     
-    // ⚠️ COMMENTED OUT: We don't have a 'payroll_timesheet' table in our shared DB.
-    // await pool.query(
-    //   'INSERT INTO payroll_timesheet (employeeId, hoursWorked, leaveDeductions, finalSalary, gross) VALUES (?,?,?,?,?)',
-    //   [result.insertId, 160, 0, salary, salary]
-    // );
-    
     return { id: result.insertId, ...data };
   },
+
+  // Update an employee
   update: async (id, data) => {
     const fields = [];
     const values = [];
-    for (let k of ['name','position','department','salary','email','history','status','score']) {
-      if (data[k] !== undefined) {
-        fields.push(k + ' = ?');
-        values.push(data[k]);
+    
+    // Map frontend keys to actual database column names
+    const keyMap = {
+      name: 'name',
+      position: 'position',
+      department: 'dept',
+      salary: 'salary',
+      email: 'contact',
+      history: 'history',
+      status: 'status',
+      score: 'score'
+    };
+
+    for (let [frontendKey, dbKey] of Object.entries(keyMap)) {
+      if (data[frontendKey] !== undefined) {
+        fields.push(dbKey + ' = ?');
+        values.push(data[frontendKey]);
       }
     }
+
     if (!fields.length) return null;
     values.push(id);
+    
     await pool.query('UPDATE employees SET ' + fields.join(', ') + ' WHERE id = ?', values);
-    const [rows] = await pool.query('SELECT * FROM employees WHERE id = ?', [id]);
-    return rows[0];
+    
+    return await EmployeeModel.getById(id);
   },
+
+  // Delete an employee
   delete: async (id) => {
     const [result] = await pool.query('DELETE FROM employees WHERE id = ?', [id]);
     return result.affectedRows;

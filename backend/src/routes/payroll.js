@@ -1,14 +1,15 @@
 /* ===================================================================== */
-/*              BUTSHA-DEV: PAYROLL ROUTES (FINAL VERSION)               */
+/*              BUTSHA-DEV: PAYROLL ROUTES (FIXED ORDER)                 */
 /* ===================================================================== */
 
 import express from 'express';
-import { PayrollModel } from '../models/payrollModel.js'; // Make sure this path is correct
+import { authenticateToken } from '../middleware/auth.js';
+import { PayrollModel } from '../models/payrollModel.js';
 
 const router = express.Router();
 
-// 1. GET: Get all payroll records (with employee names)
-router.get('/', async (req, res) => {
+// 1. GET: Get all payroll records
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const records = await PayrollModel.getAll();
         res.json(records);
@@ -18,8 +19,20 @@ router.get('/', async (req, res) => {
     }
 });
 
-// 2. GET: Get a single employee's payroll record
-router.get('/:id', async (req, res) => {
+// 🚨 ✅ FIX: Move this ABOVE the /:id route!
+// 2. GET: Payroll summary stats (for the dashboard cards)
+router.get('/summary', authenticateToken, async (req, res) => {
+    try {
+        const summary = await PayrollModel.getSummary();
+        res.json(summary);
+    } catch (err) {
+        console.error("Error fetching payroll summary:", err);
+        res.status(500).json({ error: "Failed to fetch payroll summary." });
+    }
+});
+
+// 3. GET: A single employee's payroll record
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const record = await PayrollModel.getByEmployeeId(req.params.id);
         if (!record) {
@@ -32,25 +45,14 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// 3. PUT: Update an existing payroll record
-router.put('/:id', async (req, res) => {
+// 4. PUT: Update an existing payroll record
+router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const updated = await PayrollModel.updatePayroll(req.params.id, req.body);
         res.json(updated);
     } catch (err) {
         console.error("Error updating payroll:", err);
         res.status(500).json({ error: "Failed to update payroll record." });
-    }
-});
-
-// 4. GET: Payroll summary stats (for the dashboard cards)
-router.get('/summary', async (req, res) => {
-    try {
-        const summary = await PayrollModel.getSummary();
-        res.json(summary);
-    } catch (err) {
-        console.error("Error fetching payroll summary:", err);
-        res.status(500).json({ error: "Failed to fetch payroll summary." });
     }
 });
 

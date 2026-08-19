@@ -18,11 +18,15 @@ if (missingEnvVars.length > 0) {
   );
 }
 
+// 🚨 FIX: Strip any quotes manually from the password before passing it to MySQL
+const rawPassword = process.env.DB_PASSWORD;
+const cleanPassword = rawPassword.replace(/["']/g, '');
+
 // Create the MySQL connection pool
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
+  password: cleanPassword,
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT) || 3306,
   waitForConnections: true,

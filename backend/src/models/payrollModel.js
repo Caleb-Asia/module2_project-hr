@@ -1,5 +1,5 @@
 /* ===================================================================== */
-/*              BUTSHA-DEV: PAYROLL MODEL (FIXED FOR YOUR DB)            */
+/*              BUTSHA-DEV: PAYROLL MODEL (EXACT COLUMN MATCH)           */
 /* ===================================================================== */
 
 import { pool } from '../config/db.js';
@@ -8,10 +8,9 @@ export const PayrollModel = {
   // Get all payroll records
   getAll: async () => {
     const [rows] = await pool.query(`
-      SELECT p.*, e.name as employee_name, e.department
-      FROM payroll p
-      JOIN employees e ON p.employee_id = e.id
-      ORDER BY p.year DESC, p.month DESC
+      SELECT p.*, e.name as employee_name, e.dept as department
+      FROM payroll_timesheet p
+      JOIN employees e ON p.employeeId = e.id
     `);
     return rows;
   },
@@ -19,24 +18,23 @@ export const PayrollModel = {
   // Get a single employee's payroll record by ID
   getByEmployeeId: async (employeeId) => {
     const [rows] = await pool.query(`
-      SELECT p.*, e.name as employee_name, e.department
-      FROM payroll p
-      JOIN employees e ON p.employee_id = e.id
-      WHERE p.employee_id = ?
+      SELECT p.*, e.name as employee_name, e.dept as department
+      FROM payroll_timesheet p
+      JOIN employees e ON p.employeeId = e.id
+      WHERE p.employeeId = ?
     `, [employeeId]);
     return rows[0];
   },
 
   // Update a payroll record
-  updatePayroll: async (payrollId, { gross, tax, uif, pension, net_pay }) => {
-    // Map the inputs to your actual column names
+  updatePayroll: async (payrollId, { gross, tax, uif_deduction, pension, finalSalary }) => {
     await pool.query(`
-      UPDATE payroll 
-      SET gross = ?, tax = ?, uif = ?, pension = ?, net_pay = ?
-      WHERE id = ?
-    `, [gross, tax, uif, pension, net_pay, payrollId]);
+      UPDATE payroll_timesheet 
+      SET gross = ?, leaveDeductions = ?, finalSalary = ?
+      WHERE employeeId = ?
+    `, [gross, tax, uif_deduction, pension, finalSalary, payrollId]);
 
-    const [rows] = await pool.query('SELECT * FROM payroll WHERE id = ?', [payrollId]);
+    const [rows] = await pool.query('SELECT * FROM payroll_timesheet WHERE employeeId = ?', [payrollId]);
     return rows[0];
   },
 
@@ -44,12 +42,12 @@ export const PayrollModel = {
   getSummary: async () => {
     const [rows] = await pool.query(`
       SELECT 
-        COUNT(DISTINCT employee_id) as totalEmployees,
+        COUNT(DISTINCT employeeId) as totalEmployees,
         SUM(gross) as totalGross,
-        SUM(net_pay) as totalNet,
-        SUM(tax + uif + pension) as totalDeductions,
-        AVG(net_pay) as avgSalary
-      FROM payroll
+        SUM(finalSalary) as totalNet,
+        SUM(gross - finalSalary) as totalDeductions,
+        AVG(finalSalary) as avgSalary
+      FROM payroll_timesheet
     `);
     return rows[0];
   }
