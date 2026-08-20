@@ -34,6 +34,7 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
+  decimalNumbers: true,
 });
 
 /* ===================================================================== */

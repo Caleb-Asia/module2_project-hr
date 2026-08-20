@@ -3,11 +3,12 @@
 /* ===================================================================== */
 
 import express from 'express';
+import { authenticateToken } from '../middleware/auth.js';
 import { EmployeeModel } from '../models/employeeModel.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const employees = await EmployeeModel.getAll();
         res.json(employees);
@@ -17,7 +18,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', authenticateToken, async (req, res) => {
     try {
         const employee = await EmployeeModel.getById(req.params.id);
         if (!employee) return res.status(404).json({ error: "Employee not found" });
@@ -28,7 +29,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     try {
         const newEmployee = await EmployeeModel.create(req.body);
         res.status(201).json(newEmployee);
@@ -38,7 +39,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const updated = await EmployeeModel.update(req.params.id, req.body);
         if (!updated) return res.status(404).json({ error: "Employee not found" });
@@ -49,7 +50,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const affectedRows = await EmployeeModel.delete(req.params.id);
         if (affectedRows === 0) return res.status(404).json({ error: "Employee not found" });

@@ -8,7 +8,8 @@ export const PayrollModel = {
   // Get all payroll records
   getAll: async () => {
     const [rows] = await pool.query(`
-      SELECT p.*, e.name as employee_name, e.dept as department
+      SELECT p.*, e.name as employee_name, e.dept as department,
+             (p.gross - p.tax - p.uif) AS calculatedNetPay
       FROM payroll_timesheet p
       JOIN employees e ON p.employeeId = e.id
     `);
@@ -18,7 +19,8 @@ export const PayrollModel = {
   // Get a single employee's payroll record by ID
   getByEmployeeId: async (employeeId) => {
     const [rows] = await pool.query(`
-      SELECT p.*, e.name as employee_name, e.dept as department
+      SELECT p.*, e.name as employee_name, e.dept as department,
+             (p.gross - p.tax - p.uif) AS calculatedNetPay
       FROM payroll_timesheet p
       JOIN employees e ON p.employeeId = e.id
       WHERE p.employeeId = ?
@@ -44,9 +46,9 @@ export const PayrollModel = {
       SELECT 
         COUNT(DISTINCT employeeId) as totalEmployees,
         SUM(gross) as totalGross,
-        SUM(finalSalary) as totalNet,
-        SUM(gross - finalSalary) as totalDeductions,
-        AVG(finalSalary) as avgSalary
+        SUM(gross - tax - uif) as totalNet,
+        SUM(tax + uif) as totalDeductions,
+        AVG(gross - tax - uif) as avgSalary
       FROM payroll_timesheet
     `);
 
