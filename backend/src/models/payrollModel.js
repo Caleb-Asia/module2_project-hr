@@ -49,6 +49,17 @@ export const PayrollModel = {
         AVG(finalSalary) as avgSalary
       FROM payroll_timesheet
     `);
-    return rows[0];
+
+    // mysql2 returns SUM()/AVG() results as strings (MySQL treats them as
+    // DECIMAL), not JS numbers -- convert them here so the frontend's
+    // toRand() (which does a strict typeof === "number" check) works.
+    const summary = rows[0];
+    return {
+      totalEmployees: Number(summary.totalEmployees) || 0,
+      totalGross: Number(summary.totalGross) || 0,
+      totalNet: Number(summary.totalNet) || 0,
+      totalDeductions: Number(summary.totalDeductions) || 0,
+      avgSalary: Number(summary.avgSalary) || 0,
+    };
   }
 };
