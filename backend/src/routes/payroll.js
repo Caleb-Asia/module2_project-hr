@@ -19,7 +19,7 @@ router.get('/', authenticateToken, async (req, res) => {
     }
 });
 
-// 🚨 ✅ FIX: Move this ABOVE the /:id route!
+
 // 2. GET: Payroll summary stats (for the dashboard cards)
 router.get('/summary', authenticateToken, async (req, res) => {
     try {

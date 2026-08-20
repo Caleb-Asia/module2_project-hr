@@ -27,7 +27,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
 // 2. GET: Recent Activity (Time Off Requests)
 router.get('/recent-activity', authenticateToken, async (req, res) => {
     try {
-        // Fetch the 5 most recent time-off requests with employee names
+        
         const sql = `
             SELECT 
                 t.id,

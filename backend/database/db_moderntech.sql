@@ -136,7 +136,36 @@ INSERT INTO time_off (employee_id, leave_type, start_date, end_date, status, rea
 (9, 'Childcare', '2025-07-19', '2025-07-19', 'Denied', NULL),
 (10, 'Vacation', '2024-12-03', '2024-12-03', 'Pending', NULL);
 
+-- Clear old data (optional, but safe)
+DELETE FROM payroll_timesheet;
 
+-- Re-insert the data with the correct columns
+INSERT INTO payroll_timesheet (employeeId, hoursWorked, leaveDeductions, finalSalary, gross) VALUES 
+(1, 160, 8, 69500, 70000),
+(2, 150, 10, 79000, 80000),
+(3, 170, 4, 54800, 55000),
+(4, 165, 6, 59700, 60000),
+(5, 158, 5, 57850, 58000),
+(6, 168, 2, 64800, 65000),
+(7, 175, 3, 71800, 72000),
+(8, 160, 0, 56000, 56000),
+(9, 155, 5, 61500, 62000),
+(10, 162, 4, 57750, 58000);
+
+ALTER TABLE payroll_timesheet
+ADD COLUMN tax DECIMAL(10,2) NOT NULL DEFAULT 0,
+ADD COLUMN uif DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+UPDATE payroll_timesheet
+SET 
+  tax = ROUND(gross * 0.18, 2),
+  uif = ROUND(gross * 0.01, 2);
+  
+SELECT p.*, e.name as employee_name, e.dept as department,
+       (p.gross - p.tax - p.uif) AS calculatedNetPay
+FROM payroll_timesheet p
+JOIN employees e ON p.employeeId = e.id ;
+  
 SELECT * FROM users;
 SELECT * FROM employees;
  SELECT * FROM attendance;

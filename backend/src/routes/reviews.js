@@ -6,7 +6,7 @@ const router = express.Router();
 // 1. GET: Get all reviews with employee details
 router.get('/', async (req, res) => {
     try {
-        // ✅ FIX: Use e.name and e.id to match your db_moderntech SQL
+       
         const sql = `
             SELECT r.*, e.name as employee_name, e.dept as department
             FROM reviews r
@@ -75,7 +75,7 @@ router.delete('/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
-        // ✅ FIX: Ensure we use the correct column name 'review_id'
+        
         const sql = 'DELETE FROM reviews WHERE review_id = ?';
         const [result] = await pool.query(sql, [id]);
         

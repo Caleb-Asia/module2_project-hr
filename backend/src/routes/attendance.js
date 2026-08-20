@@ -6,7 +6,7 @@ const router = express.Router();
 // 1. GET: Get all attendance records
 router.get('/', async (req, res) => {
     try {
-        // ✅ FIX: Changed e.first_name/last_name to e.name, e.department to e.dept, e.employee_id to e.id
+        
         const sql = `
             SELECT a.*, e.name as employee_name, e.dept as department
             FROM attendance a
