@@ -1,5 +1,5 @@
 CREATE DATABASE IF NOT EXISTS db_moderntech;
-USE db_moderntech;
+USE railway;
 
 
 
